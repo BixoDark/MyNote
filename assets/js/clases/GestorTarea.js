@@ -2,76 +2,121 @@ import Tarea from "./Tarea.js";
 
 class GestorTareas {
     constructor() {
-        this.tareas = [];
+        this.lista = [];
+        this.#cargar();
     }
 
-    crearTarea(tarea, categoria, fecha, hora) {
-        if (!tarea || tarea.trim() === "") {
-            throw new Error("La descripción no puede estar vacía.");
+    guardar(id, datos) {
+        if (!datos || typeof datos !== "object") {
+            throw new Error("Datos inválidos.");
         }
-        const nuevaTarea = new Tarea(tarea, undefined, categoria, fecha, hora);
-        this.tareas.push(nuevaTarea);
-        this.#guardarEnLocalStorage();
-        return nuevaTarea;
+
+        if (id) {
+            const tarea = this.lista.find(t => t.id === id);
+            if (!tarea) {
+                throw new Error("Tarea no encontrada.");
+            }
+
+            if (datos.tarea !== undefined) {
+                if (!datos.tarea || datos.tarea.trim() === "") {
+                    throw new Error("Texto requerido.");
+                }
+                tarea.tarea = datos.tarea;
+            }
+            if (datos.categoria !== undefined) tarea.categoria = datos.categoria;
+            if (datos.fecha !== undefined) tarea.fecha = datos.fecha;
+            if (datos.hora !== undefined) tarea.hora = datos.hora;
+            if (datos.estado !== undefined) tarea.estado = datos.estado;
+
+            this.#guardar();
+            return { tarea, accion: "editada" };
+        }
+
+        if (!datos.tarea || datos.tarea.trim() === "") {
+            throw new Error("Texto requerido.");
+        }
+
+        const nueva = new Tarea(
+            datos.tarea,
+            undefined,
+            datos.categoria,
+            datos.fecha || null,
+            datos.hora || null
+        );
+
+        this.lista.push(nueva);
+        this.#guardar();
+        return { tarea: nueva, accion: "creada" };
     }
 
-    async obtenerTareas() {
-        await this.#leerLocalStorage();
-        return [...this.tareas].reverse();
+    obtenerTareas() {
+        this.#cargar();
+        return [...this.lista].reverse();
     }
 
     obtenerTareaPorId(id) {
-        return this.tareas.find((tarea) => tarea.id === id) || null;
-    }
-
-    finalizarTarea(id) {
-        const tarea = this.obtenerTareaPorId(id);
-        if (tarea) {
-            tarea.estado = 'completada';
-            this.#guardarEnLocalStorage();
+        const tarea = this.lista.find(t => t.id === id);
+        if (!tarea) {
+            throw new Error("Tarea no encontrada.");
         }
         return tarea;
     }
 
+    finalizarTarea(id) {
+        const tarea = this.obtenerTareaPorId(id);
+        tarea.cambiarEstado();
+        this.#guardar();
+        return tarea;
+    }
+
     eliminarTarea(id) {
-        const indice = this.tareas.findIndex((tarea) => tarea.id === id);
+        const indice = this.lista.findIndex(t => t.id === id);
         if (indice === -1) {
-            return false;
+            throw new Error("ID inexistente.");
         }
-        this.tareas.splice(indice, 1);
-        this.#guardarEnLocalStorage();
+
+        this.lista.splice(indice, 1);
+        this.#guardar();
         return true;
     }
 
-    tareasTotal() {
-        return this.tareas.length;
+    get total() {
+        return this.lista.length;
     }
 
-    tareasPendientes() {
-        return this.tareas.filter(tarea => tarea.estado === 'pendiente').length;
+    get pendientes() {
+        return this.lista.filter(t => t.estado === 'pendiente').length;
     }
 
-    tareasFinalizadas() {
-        return this.tareas.filter(tarea => tarea.estado === 'completada').length;
+    get finalizadas() {
+        return this.lista.filter(t => t.estado === 'completada').length;
     }
 
-    #guardarEnLocalStorage() {
-        localStorage.setItem("tareas", JSON.stringify(this.tareas));
+    #guardar() {
+        try {
+            localStorage.setItem("tareas", JSON.stringify(this.lista));
+        } catch (error) {
+            throw new Error("Error de guardado.");
+        }
     }
 
-    async #leerLocalStorage() {
-        const tareas = localStorage.getItem("tareas");
-
-        if (tareas) {
-            const tareasParseadas = JSON.parse(tareas);
-            this.tareas = tareasParseadas.map(t => {
-                const instancia = new Tarea(t.tarea, t.id, t.categoria, t.fecha, t.hora);
-                instancia.estado = t.estado;
-                instancia.fechaCreacion = t.fechaCreacion;
-                return instancia;
-            });
-        } else {
-            this.tareas = [];
+    #cargar() {
+        try {
+            const datos = localStorage.getItem("tareas");
+            if (datos) {
+                const parseadas = JSON.parse(datos);
+                this.lista = parseadas.map(t => {
+                    const instancia = new Tarea(t.tarea, t.id, t.categoria, t.fecha, t.hora);
+                    instancia.estado = t.estado;
+                    instancia.fechaCreacion = t.fechaCreacion;
+                    return instancia;
+                });
+            } else {
+                this.lista = [];
+            }
+        } catch (error) {
+            this.lista = [];
+            throw new Error("Almacenamiento corrupto.");
         }
     }
 }
