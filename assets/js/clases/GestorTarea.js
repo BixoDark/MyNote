@@ -12,32 +12,31 @@ class GestorTareas {
         }
 
         if (id) {
-            const tarea = this.lista.find(t => t.id === id);
-            if (!tarea) {
-                throw new Error("Tarea no encontrada.");
-            }
+            const tarea = this.obtenerTareaPorId(id);
 
-            if (datos.tarea !== undefined) {
-                if (!datos.tarea || datos.tarea.trim() === "") {
+            if ("tarea" in datos) {
+                if (!datos.tarea?.trim()) {
                     throw new Error("Texto requerido.");
                 }
-                tarea.tarea = datos.tarea;
+                tarea.tarea = datos.tarea.trim();
             }
-            if (datos.categoria !== undefined) tarea.categoria = datos.categoria;
-            if (datos.fecha !== undefined) tarea.fecha = datos.fecha;
-            if (datos.hora !== undefined) tarea.hora = datos.hora;
-            if (datos.estado !== undefined) tarea.estado = datos.estado;
+
+            ["categoria", "fecha", "hora", "estado"].forEach(campo => {
+                if (campo in datos) {
+                    tarea[campo] = datos[campo];
+                }
+            });
 
             this.#guardar();
             return { tarea, accion: "editada" };
         }
 
-        if (!datos.tarea || datos.tarea.trim() === "") {
+        if (!datos.tarea?.trim()) {
             throw new Error("Texto requerido.");
         }
 
         const nueva = new Tarea(
-            datos.tarea,
+            datos.tarea.trim(),
             undefined,
             datos.categoria,
             datos.fecha || null,
@@ -46,19 +45,21 @@ class GestorTareas {
 
         this.lista.push(nueva);
         this.#guardar();
+
         return { tarea: nueva, accion: "creada" };
     }
 
     obtenerTareas() {
-        this.#cargar();
         return [...this.lista].reverse();
     }
 
     obtenerTareaPorId(id) {
-        const tarea = this.lista.find(t => t.id === id);
+        const tarea = this.lista.find(tarea => tarea.id === id);
+
         if (!tarea) {
             throw new Error("Tarea no encontrada.");
         }
+
         return tarea;
     }
 
@@ -70,13 +71,15 @@ class GestorTareas {
     }
 
     eliminarTarea(id) {
-        const indice = this.lista.findIndex(t => t.id === id);
-        if (indice === -1) {
+        const indice = this.lista.findIndex(tarea => tarea.id === id);
+
+        if (indice < 0) {
             throw new Error("ID inexistente.");
         }
 
         this.lista.splice(indice, 1);
         this.#guardar();
+
         return true;
     }
 
@@ -85,36 +88,32 @@ class GestorTareas {
     }
 
     get pendientes() {
-        return this.lista.filter(t => t.estado === 'pendiente').length;
+        return this.lista.filter(({ estado }) => estado === "pendiente").length;
     }
 
     get finalizadas() {
-        return this.lista.filter(t => t.estado === 'completada').length;
+        return this.lista.filter(({ estado }) => estado === "completada").length;
     }
 
     #guardar() {
         try {
             localStorage.setItem("tareas", JSON.stringify(this.lista));
-        } catch (error) {
+        } catch {
             throw new Error("Error de guardado.");
         }
     }
 
     #cargar() {
         try {
-            const datos = localStorage.getItem("tareas");
-            if (datos) {
-                const parseadas = JSON.parse(datos);
-                this.lista = parseadas.map(t => {
-                    const instancia = new Tarea(t.tarea, t.id, t.categoria, t.fecha, t.hora);
-                    instancia.estado = t.estado;
-                    instancia.fechaCreacion = t.fechaCreacion;
-                    return instancia;
-                });
-            } else {
-                this.lista = [];
-            }
-        } catch (error) {
+            const datos = JSON.parse(localStorage.getItem("tareas")) || [];
+
+            this.lista = datos.map(({ tarea, id, categoria, fecha, hora, estado, fechaCreacion }) => {
+                const instancia = new Tarea(tarea, id, categoria, fecha, hora);
+                instancia.estado = estado;
+                instancia.fechaCreacion = fechaCreacion;
+                return instancia;
+            });
+        } catch {
             this.lista = [];
             throw new Error("Almacenamiento corrupto.");
         }
