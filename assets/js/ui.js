@@ -1,5 +1,3 @@
-// ui.js
-
 const SELECTORES = {
     formulario: '#formTarea',
     texto: '#tareaTexto',
@@ -18,20 +16,17 @@ const formatos = {
 
 const DOM = { bloques: {} };
 
-// Formatea fechas y horas evitando redundancia
 const formatearFechaHora = (cadena, tipo) => {
     if (!cadena) return '';
     const [a, b, c] = cadena.split(/[-:]/).map(Number);
     return formatos[tipo].format(tipo === 'fecha' ? new Date(a, b - 1, c) : new Date().setHours(a, b, 0, 0));
 };
 
-// DRY: Centraliza el cambio de visibilidad de las listas y sus estados vacíos
 const alternarBloque = (bloque, mostrarLista) => {
     bloque.lista.classList.toggle('d-none', !mostrarLista);
     bloque.vacio.classList.toggle('d-none', mostrarLista);
 };
 
-// DRY: Centraliza la iteración sobre los contenedores de categorías
 const iterarBloques = (callback) => Object.values(DOM.bloques).forEach(callback);
 
 const crearNodoTarea = (tarea) => {
@@ -42,6 +37,14 @@ const crearNodoTarea = (tarea) => {
     const tiempo = [formatearFechaHora(tarea.hora, 'hora'), formatearFechaHora(tarea.fecha, 'fecha')]
         .filter(Boolean)
         .join(' - ');
+
+    let dataLimite = '';
+    if (tarea.fecha && tarea.hora && !completada) {
+        const [anio, mes, dia] = tarea.fecha.split('-');
+        const [hora, min] = tarea.hora.split(':');
+        const timestampLimite = new Date(anio, mes - 1, dia, hora, min).getTime();
+        dataLimite = `data-limite="${timestampLimite}"`;
+    }
 
     const botones = [
         { accion: 'completar', color: completada ? 'btn-secondary' : 'btn-success', icono: 'check-lg' },
@@ -55,14 +58,17 @@ const crearNodoTarea = (tarea) => {
     item.innerHTML = `
         <div class="ms-2 me-auto ${completada ? 'text-decoration-line-through text-muted' : ''}">
             <div class="fw-bold">${tarea.tarea}</div>
-            ${tiempo ? `<small class="text-secondary"><i class="bi bi-clock me-1"></i>${tiempo}</small>` : ''}
+            ${tiempo ? `<small class="text-secondary d-block"><i class="bi bi-clock me-1"></i>${tiempo}</small>` : ''}
+            ${dataLimite ? `<span class="badge bg-warning text-dark mt-1 contador-tiempo" ${dataLimite}></span>` : ''}
         </div>
         <div class="d-flex gap-2">${botones}</div>`;
-    
+
     return item;
 };
 
 export const UI = {
+    _intervaloGlobal: null,
+
     inicializarDOM() {
         Object.entries(SELECTORES).forEach(([clave, selector]) => {
             DOM[clave] = document.querySelector(selector);
@@ -133,18 +139,73 @@ export const UI = {
                 bloque.lista.appendChild(crearNodoTarea(tarea));
             }
         });
+        this.iniciarContadoresRegresivos();
     },
 
     actualizarBotonGuardar(cargando = false, editando = false) {
         if (!DOM.botonGuardar) return;
         DOM.botonGuardar.disabled = cargando;
-        
-        DOM.botonGuardar.innerHTML = cargando 
-            ? `<span class="spinner-border spinner-border-sm me-1"></span>Procesando...` 
+
+        DOM.botonGuardar.innerHTML = cargando
+            ? `<span class="spinner-border spinner-border-sm me-1"></span>Procesando...`
             : editando ? 'Actualizar Tarea' : 'Agregar Tarea';
 
         if (!cargando) {
             DOM.botonGuardar.className = `btn ${editando ? 'btn-warning' : 'btn-primary'}`;
         }
+    },
+
+    mostrarNotificacionTemporal(mensaje, tipo = 'success') {
+        const icono = { success: 'check-circle', danger: 'trash', info: 'arrow-counterclockwise' }[tipo] || 'info-circle';
+
+        if (!DOM.notificaciones) {
+            DOM.notificaciones = document.createElement('div');
+            DOM.notificaciones.className = 'position-fixed bottom-0 end-0 p-3 d-flex flex-column gap-2 z-3';
+            document.body.appendChild(DOM.notificaciones);
+        }
+
+        const notificacion = document.createElement('div');
+        notificacion.className = `alert alert-${tipo} shadow mb-0 fade show`;
+        notificacion.innerHTML = `<i class="bi bi-${icono} me-2"></i>${mensaje}`;
+
+        DOM.notificaciones.appendChild(notificacion);
+
+        setTimeout(() => {
+            notificacion.classList.remove('show');
+            setTimeout(() => {
+                notificacion.remove();
+                if (!DOM.notificaciones.childElementCount) {
+                    DOM.notificaciones.remove();
+                    DOM.notificaciones = null;
+                }
+            }, 150);
+        }, 3000);
+    },
+
+    iniciarContadoresRegresivos() {
+        if (this._intervaloGlobal) clearInterval(this._intervaloGlobal);
+
+        this._intervaloGlobal = setInterval(() => {
+            const ahora = Date.now();
+            const nodosContador = document.querySelectorAll('.contador-tiempo[data-limite]');
+
+            nodosContador.forEach(nodo => {
+                const limite = parseInt(nodo.dataset.limite, 10);
+                const diferencia = limite - ahora;
+
+                if (diferencia <= 0) {
+                    nodo.textContent = "¡Tiempo agotado!";
+                    nodo.className = "badge bg-danger text-white mt-1 contador-tiempo";
+                    delete nodo.dataset.limite;
+                } else {
+                    const dias = Math.floor(diferencia / (1000 * 60 * 60 * 24));
+                    const horas = Math.floor((diferencia / (1000 * 60 * 60)) % 24);
+                    const min = Math.floor((diferencia / 1000 / 60) % 60);
+                    const seg = Math.floor((diferencia / 1000) % 60);
+
+                    nodo.textContent = `Quedan: ${dias}d ${horas}h ${min}m ${seg}s`;
+                }
+            });
+        }, 1000);
     }
 };

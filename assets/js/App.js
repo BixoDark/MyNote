@@ -8,7 +8,6 @@ const estado = {
     cargando: false
 };
 
-// Helpers de utilidad
 const esperar = (ms) => new Promise(resolver => setTimeout(resolver, ms));
 const resetearIDEdicion = () => { estado.idEditando = null; };
 const limpiarFormularioCompleto = () => UI.limpiarFormulario(resetearIDEdicion);
@@ -36,13 +35,19 @@ const procesarFormulario = async (evento) => {
 
     try {
         UI.actualizarBotonGuardar(true);
-        await esperar(2000);
+        await esperar(1000);
 
         const datosTarea = UI.obtenerDatosFormulario();
+        const esEdicion = !!estado.idEditando;
+
         await estado.gestor.guardar(estado.idEditando, datosTarea);
 
         limpiarFormularioCompleto();
         await actualizarPantalla(true);
+
+        const mensaje = esEdicion ? "Tarea editada" : "Tarea agregada";
+        UI.mostrarNotificacionTemporal(mensaje);
+
     } catch (error) {
         console.error(error.message);
     } finally {
@@ -61,18 +66,27 @@ const procesarAcciones = async (evento) => {
         if (clases.contains('accion-eliminar')) {
             await estado.gestor.eliminarTarea(id);
             if (estado.idEditando === id) limpiarFormularioCompleto();
-            
+            UI.mostrarNotificacionTemporal("Tarea eliminada", "danger");
+
         } else if (clases.contains('accion-completar')) {
             await estado.gestor.finalizarTarea(id);
-            
+
+            const tareaActualizada = estado.gestor.obtenerTareaPorId(id);
+            const estaCompletada = tareaActualizada.estado === 'completada';
+
+            const mensaje = estaCompletada ? "Tarea realizada" : "Tarea marcada como pendiente";
+            const tipoNotificacion = estaCompletada ? "success" : "info";
+
+            UI.mostrarNotificacionTemporal(mensaje, tipoNotificacion);
+
         } else if (clases.contains('accion-editar')) {
             const tarea = estado.gestor.obtenerTareaPorId(id);
             UI.cargarDatosEnFormulario(tarea);
             estado.idEditando = id;
             UI.actualizarBotonGuardar(false, true);
-            return; // No actualiza la pantalla si solo entra en modo edición
+            return;
         }
-        
+
         await actualizarPantalla(true);
     } catch (error) {
         console.error(error.message);
@@ -83,11 +97,11 @@ const iniciar = async () => {
     try {
         UI.inicializarDOM();
         const DOM = UI.obtenerElementosDOM();
-        
+
         DOM.formulario.addEventListener('submit', procesarFormulario);
         DOM.formulario.addEventListener('reset', limpiarFormularioCompleto);
         document.addEventListener('click', procesarAcciones);
-        
+
         await actualizarPantalla();
     } catch (error) {
         console.error(error.message);
