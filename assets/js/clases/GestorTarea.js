@@ -37,7 +37,29 @@ class GestorTareas {
     }
 
     obtenerTareas() {
-        return [...this.lista].reverse();
+        return [...this.lista].sort((a, b) => {
+            const calcularTiempo = (tarea) => {
+                if (!tarea.fecha) return Infinity;
+
+                const [anio, mes, dia] = tarea.fecha.split('-');
+
+                let h = 23;
+                let m = 59;
+
+                if (tarea.hora) {
+                    const [horaString, minString] = tarea.hora.split(':');
+                    h = parseInt(horaString, 10);
+                    m = parseInt(minString, 10);
+                }
+
+                return new Date(anio, mes - 1, dia, h, m).getTime();
+            };
+
+            const tiempoA = calcularTiempo(a);
+            const tiempoB = calcularTiempo(b);
+
+            return tiempoA - tiempoB;
+        });
     }
 
     obtenerTareaPorId(id) {

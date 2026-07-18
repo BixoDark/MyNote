@@ -23,6 +23,13 @@ const actualizarPantalla = async (saltarEspera = false) => {
 
         const tareas = await estado.gestor.obtenerTareas();
         UI.renderizarTareas(tareas);
+
+        UI.actualizarContadores(
+            estado.gestor.total,
+            estado.gestor.pendientes,
+            estado.gestor.finalizadas
+        );
+
     } catch (error) {
         console.error(error.message);
         estado.cargando = false;
@@ -61,14 +68,23 @@ const procesarAcciones = async (evento) => {
 
     const { id } = boton.dataset;
     const clases = boton.classList;
+    
+    const contenidoOriginal = boton.innerHTML;
 
     try {
         if (clases.contains('accion-eliminar')) {
+            boton.disabled = true;
+            boton.innerHTML = '<span class="spinner-border spinner-border-sm" style="width: 1rem; height: 1rem;"></span>';
+            
             await estado.gestor.eliminarTarea(id);
+            
             if (estado.idEditando === id) limpiarFormularioCompleto();
             UI.mostrarNotificacionTemporal("Tarea eliminada", "danger");
 
         } else if (clases.contains('accion-completar')) {
+            boton.disabled = true;
+            boton.innerHTML = '<span class="spinner-border spinner-border-sm" style="width: 1rem; height: 1rem;"></span>';
+            
             await estado.gestor.finalizarTarea(id);
 
             const tareaActualizada = estado.gestor.obtenerTareaPorId(id);
@@ -88,8 +104,12 @@ const procesarAcciones = async (evento) => {
         }
 
         await actualizarPantalla(true);
+        
     } catch (error) {
         console.error(error.message);
+        boton.disabled = false;
+        boton.innerHTML = contenidoOriginal;
+        UI.mostrarNotificacionTemporal("Error al procesar la tarea", "danger");
     }
 };
 

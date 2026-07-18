@@ -4,9 +4,11 @@ const SELECTORES = {
     categoria: '#tipoTarea',
     fecha: '#fechaTarea',
     hora: '#horaTarea',
-    botonGuardar: '#formTarea button[type="submit"]'
+    botonGuardar: '#formTarea button[type="submit"]',
+    contadorTotal: '#contadorTotal',
+    contadorPendientes: '#contadorPendientes',
+    contadorRealizadas: '#contadorRealizadas'
 };
-
 const CATEGORIAS = ['importante', 'relevante', 'nota', 'compra'];
 
 const formatos = {
@@ -74,6 +76,10 @@ export const UI = {
             DOM[clave] = document.querySelector(selector);
         });
 
+        const hoy = new Date();
+        const fechaLocal = new Date(hoy.getTime() - (hoy.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+        DOM.fecha.setAttribute('min', fechaLocal);
+
         CATEGORIAS.forEach(cat => {
             const sufijo = cat.charAt(0).toUpperCase() + cat.slice(1) + 's';
             DOM.bloques[cat] = {
@@ -82,7 +88,6 @@ export const UI = {
             };
         });
     },
-
     obtenerElementosDOM: () => DOM,
 
     obtenerDatosFormulario: () => ({
@@ -99,9 +104,33 @@ export const UI = {
         DOM.hora.value = tarea.hora || '';
     },
 
-    validarFormulario() {
+    validarFormulario(esEdicion = false) {
+        DOM.fecha.setCustomValidity('');
+        DOM.hora.setCustomValidity('');
+
+        const fecha = DOM.fecha.value;
+        const hora = DOM.hora.value;
+
+        if (!esEdicion && fecha) {
+            const [anio, mes, dia] = fecha.split('-');
+
+            const h = hora ? parseInt(hora.split(':')[0], 10) : 23;
+            const m = hora ? parseInt(hora.split(':')[1], 10) : 59;
+
+            const tiempoSeleccionado = new Date(anio, mes - 1, dia, h, m).getTime();
+
+            if (tiempoSeleccionado < Date.now() - 60000) {
+                DOM.fecha.setCustomValidity('Tiempo en el pasado.');
+                if (hora) DOM.hora.setCustomValidity('Tiempo en el pasado.');
+
+                this.mostrarNotificacionTemporal("La fecha y hora deben ser futuras.", "danger");
+
+                console.warn("El usuario ingreso una hora inferior a la actual.")
+            }
+        }
+
         const esValido = DOM.formulario.checkValidity();
-        DOM.formulario.classList.toggle('was-validated', !esValido);
+        DOM.formulario.classList.toggle('was-validated', true);
         return esValido;
     },
 
@@ -153,6 +182,12 @@ export const UI = {
         if (!cargando) {
             DOM.botonGuardar.className = `btn ${editando ? 'btn-warning' : 'btn-primary'}`;
         }
+    },
+
+    actualizarContadores(total, pendientes, realizadas) {
+        if (DOM.contadorTotal) DOM.contadorTotal.textContent = total;
+        if (DOM.contadorPendientes) DOM.contadorPendientes.textContent = pendientes;
+        if (DOM.contadorRealizadas) DOM.contadorRealizadas.textContent = realizadas;
     },
 
     mostrarNotificacionTemporal(mensaje, tipo = 'success') {
