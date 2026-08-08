@@ -159,6 +159,25 @@
                     </div>
                 </div>
             </div>
+            <div class="modal fade" id="modalConfirmarEliminar" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content border-0 shadow">
+                        <div class="modal-header bg-danger text-white py-3 px-4">
+                            <h2 class="h5 mb-0 d-flex align-items-center">
+                                <i class="bi bi-trash3 me-2"></i>Confirmar eliminación
+                            </h2>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                        </div>
+                        <div class="modal-body p-4">
+                            <p class="mb-3" id="textoConfirmarEliminar">¿Seguro que deseas eliminar esta tarea?</p>
+                            <div class="d-flex justify-content-end gap-2">
+                                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">No</button>
+                                <button type="button" class="btn btn-danger" id="confirmarEliminarBtn">Sí</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 

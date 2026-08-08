@@ -83,13 +83,21 @@ const procesarAcciones = async (evento) => {
         }
 
         if (clases.contains('accion-eliminar')) {
-            boton.disabled = true;
-            boton.innerHTML = '<span class="spinner-border spinner-border-sm" style="width: 1rem; height: 1rem;"></span>';
-            
-            await estado.gestor.eliminarTarea(id);
-            
-            if (estado.idEditando === id) limpiarFormularioCompleto();
-            UI.mostrarNotificacionTemporal("Tarea eliminada", "danger");
+            const tarea = estado.gestor.obtenerTareaPorId(id);
+            UI.mostrarConfirmacionEliminar(tarea, async () => {
+                try {
+                    await estado.gestor.eliminarTarea(id);
+                    if (estado.idEditando === id) limpiarFormularioCompleto();
+                    UI.mostrarNotificacionTemporal("Tarea eliminada", "danger");
+                    await actualizarPantalla(true);
+                } catch (error) {
+                    console.error(error.message);
+                    UI.mostrarNotificacionTemporal("Error al eliminar la tarea", "danger");
+                } finally {
+                    UI.cerrarConfirmacionEliminar();
+                }
+            });
+            return;
 
         } else if (clases.contains('accion-completar')) {
             boton.disabled = true;

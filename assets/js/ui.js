@@ -9,6 +9,9 @@ const SELECTORES = {
     modalTitulo: '#modalTitulo',
     campoFecha: '#campoFecha',
     campoHora: '#campoHora',
+    modalConfirmarEliminar: '#modalConfirmarEliminar',
+    textoConfirmarEliminar: '#textoConfirmarEliminar',
+    confirmarEliminarBtn: '#confirmarEliminarBtn',
     botonGuardar: '#formTarea button[type="submit"]',
     contadorTotal: '#contadorTotal',
     contadorPendientes: '#contadorPendientes',
@@ -75,6 +78,7 @@ const crearNodoTarea = (tarea) => {
 
 export const UI = {
     _intervaloGlobal: null,
+    _confirmarEliminarCallback: null,
 
     inicializarDOM() {
         Object.entries(SELECTORES).forEach(([clave, selector]) => {
@@ -94,6 +98,22 @@ export const UI = {
             DOM.modalInstancia = bootstrap.Modal.getOrCreateInstance(DOM.modal);
             DOM.modal.addEventListener('hidden.bs.modal', () => {
                 this.limpiarFormulario(() => {});
+            });
+        }
+
+        if (DOM.modalConfirmarEliminar) {
+            DOM.modalConfirmarEliminarInstancia = bootstrap.Modal.getOrCreateInstance(DOM.modalConfirmarEliminar);
+            DOM.modalConfirmarEliminar.addEventListener('hidden.bs.modal', () => {
+                this._confirmarEliminarCallback = null;
+            });
+        }
+
+        if (DOM.confirmarEliminarBtn) {
+            DOM.confirmarEliminarBtn.addEventListener('click', () => {
+                if (this._confirmarEliminarCallback) {
+                    this._confirmarEliminarCallback();
+                    this._confirmarEliminarCallback = null;
+                }
             });
         }
 
@@ -138,6 +158,18 @@ export const UI = {
 
     cerrarModal() {
         DOM.modalInstancia?.hide();
+    },
+
+    mostrarConfirmacionEliminar(tarea, callback) {
+        this._confirmarEliminarCallback = callback;
+        if (DOM.textoConfirmarEliminar) {
+            DOM.textoConfirmarEliminar.innerHTML = `¿Seguro que deseas eliminar esta tarea?<br><strong class="text-danger">${tarea.tarea}</strong>`;
+        }
+        DOM.modalConfirmarEliminarInstancia?.show();
+    },
+
+    cerrarConfirmacionEliminar() {
+        DOM.modalConfirmarEliminarInstancia?.hide();
     },
 
     aplicarTemaModal(categoria) {
