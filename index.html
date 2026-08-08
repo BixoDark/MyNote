@@ -21,7 +21,7 @@
         </div>
     </header>
     </header>
-    <main class="container-xl px-3 pb-5">
+    <div class="container-xl px-3 pb-5">
 
         <div class="row mb-4">
             <div class="col-12 d-flex justify-content-center justify-content-md-start gap-3 flex-wrap">
@@ -39,55 +39,19 @@
             </div>
         </div>
 
-        <section class="card shadow border-0 mb-4">
-            <main class="container-xl px-3 pb-5">
-                <section class="card shadow border-0 mb-4">
-                    <div class="card-body p-4">
-                        <h2 class="h5 card-title mb-3 d-flex align-items-center">
-                            <i class="bi bi-plus-circle me-2 text-primary"></i>Nueva tarea
-                        </h2>
-                        <form id="formTarea" novalidate>
-                            <div class="row g-3">
-                                <div class="col-12 col-md-8 col-lg-9">
-                                    <label for="tareaTexto" class="form-label fw-semibold small ">Tarea</label>
-                                    <input type="text" class="form-control" id="tareaTexto"
-                                        placeholder="Escribe la tarea..." required>
-                                </div>
-                                <div class="col-12 col-sm-6 col-md-4 col-lg-3">
-                                    <label for="tipoTarea" class="form-label fw-semibold small">Categoría</label>
-                                    <select class="form-select" id="tipoTarea" required>
-                                        <option value="" selected disabled>Selecciona...</option>
-                                        <option value="importante">⚠️ Importante</option>
-                                        <option value="relevante">⚡ Relevante</option>
-                                        <option value="nota">📝 Nota</option>
-                                        <option value="compra">🛒 Compra</option>
-                                    </select>
-                                </div>
-                                <div class="col-12 col-sm-6 col-md-4">
-                                    <label for="fechaTarea" class="form-label fw-semibold small">Fecha
-                                        (opcional)</label>
-                                    <input type="date" class="form-control" id="fechaTarea">
-                                </div>
-                                <div class="col-12 col-sm-6 col-md-4">
-                                    <label for="horaTarea" class="form-label fw-semibold small">Hora (opcional)</label>
-                                    <input type="time" class="form-control" id="horaTarea">
-                                </div>
-                                <div class="col-12 col-sm-6 col-md-4 d-flex align-items-end">
-                                    <button type="submit" class="btn btn-primary w-100 py-2">
-                                        <i class="bi bi-plus-lg me-1"></i>Agregar Tarea
-                                    </button>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                </section>
-                <div class="row g-4">
+        <main class="container-xl px-3 pb-5">
+            <div class="row g-4">
                     <div class="col-12">
                         <section class="card border-0 shadow-sm overflow-hidden">
                             <div class="card-header bg-danger text-white py-3">
-                                <h2 class="h5 mb-0 d-flex align-items-center">
-                                    <i class="bi bi-exclamation-triangle-fill me-2"></i>Tareas Importantes
-                                </h2>
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <h2 class="h5 mb-0 d-flex align-items-center">
+                                        <i class="bi bi-exclamation-triangle-fill me-2"></i>Tareas Importantes
+                                    </h2>
+                                    <button type="button" class="btn btn-sm btn-light shadow-sm accion-abrir-modal" data-categoria="importante" aria-label="Agregar tarea importante">
+                                        <i class="bi bi-plus"></i>
+                                    </button>
+                                </div>
                             </div>
                             <div class="card-body p-4">
                                 <ul class="list-group list-group-flush d-none" id="listaImportantes"></ul>
@@ -102,9 +66,14 @@
                     <div class="col-12 col-md-6 col-lg-4">
                         <section class="card border-0 shadow-sm h-100 overflow-hidden">
                             <div class="card-header bg-warning text-dark py-3">
-                                <h3 class="h6 mb-0 d-flex align-items-center fw-bold">
-                                    <i class="bi bi-lightning-charge-fill me-2"></i>Tareas Relevantes
-                                </h3>
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <h3 class="h6 mb-0 d-flex align-items-center fw-bold">
+                                        <i class="bi bi-lightning-charge-fill me-2"></i>Tareas Relevantes
+                                    </h3>
+                                    <button type="button" class="btn btn-sm btn-light shadow-sm accion-abrir-modal" data-categoria="relevante" aria-label="Agregar tarea relevante">
+                                        <i class="bi bi-plus"></i>
+                                    </button>
+                                </div>
                             </div>
                             <div class="card-body p-3">
                                 <ul class="list-group list-group-flush d-none" id="listaRelevantes"></ul>
@@ -117,9 +86,14 @@
                     <div class="col-12 col-md-6 col-lg-4">
                         <section class="card border-0 shadow-sm h-100 overflow-hidden">
                             <div class="card-header bg-primary text-white py-3">
-                                <h3 class="h6 mb-0 d-flex align-items-center">
-                                    <i class="bi bi-journal-text me-2"></i>Notas
-                                </h3>
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <h3 class="h6 mb-0 d-flex align-items-center">
+                                        <i class="bi bi-journal-text me-2"></i>Notas
+                                    </h3>
+                                    <button type="button" class="btn btn-sm btn-light shadow-sm accion-abrir-modal" data-categoria="nota" aria-label="Agregar nota">
+                                        <i class="bi bi-plus"></i>
+                                    </button>
+                                </div>
                             </div>
                             <div class="card-body p-3">
                                 <ul class="list-group list-group-flush d-none" id="listaNotas"></ul>
@@ -130,9 +104,14 @@
                     <div class="col-12 col-md-12 col-lg-4">
                         <section class="card border-0 shadow-sm h-100 overflow-hidden">
                             <div class="card-header bg-success text-white py-3">
-                                <h3 class="h6 mb-0 d-flex align-items-center">
-                                    <i class="bi bi-cart-fill me-2"></i>Compras
-                                </h3>
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <h3 class="h6 mb-0 d-flex align-items-center">
+                                        <i class="bi bi-cart-fill me-2"></i>Compras
+                                    </h3>
+                                    <button type="button" class="btn btn-sm btn-light shadow-sm accion-abrir-modal" data-categoria="compra" aria-label="Agregar compra">
+                                        <i class="bi bi-plus"></i>
+                                    </button>
+                                </div>
                             </div>
                             <div class="card-body p-3">
                                 <ul class="list-group list-group-flush d-none" id="listaCompras"></ul>
@@ -142,7 +121,44 @@
                         </section>
                     </div>
                 </div>
-            </main>
+        </div>
+        <div class="modal fade" id="modalAgregarTarea" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content border-0 shadow">
+                        <div class="modal-header py-3 px-4" id="modalHeader">
+                            <h2 class="h5 mb-0 d-flex align-items-center" id="modalTitulo">
+                                <i class="bi bi-pencil-square me-2"></i>Agregar tarea
+                            </h2>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                        </div>
+                        <div class="modal-body p-4">
+                            <form id="formTarea" novalidate>
+                                <div class="row g-3">
+                                    <div class="col-12">
+                                        <label for="tareaTexto" class="form-label fw-semibold small">Descripción</label>
+                                        <textarea class="form-control" id="tareaTexto" rows="4" placeholder="Escribe la tarea..." required></textarea>
+                                    </div>
+                                    <div class="col-12 col-sm-6" id="campoFecha">
+                                        <label for="fechaTarea" class="form-label fw-semibold small">Fecha (opcional)</label>
+                                        <input type="date" class="form-control" id="fechaTarea">
+                                    </div>
+                                    <div class="col-12 col-sm-6" id="campoHora">
+                                        <label for="horaTarea" class="form-label fw-semibold small">Hora (opcional)</label>
+                                        <input type="time" class="form-control" id="horaTarea">
+                                    </div>
+                                    <input type="hidden" id="tipoTarea" value="">
+                                    <div class="col-12 d-flex justify-content-end gap-2 pt-2">
+                                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="bi bi-plus-lg me-1"></i>Agregar Tarea
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 

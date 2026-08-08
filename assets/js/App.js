@@ -12,6 +12,10 @@ const esperar = (ms) => new Promise(resolver => setTimeout(resolver, ms));
 const resetearIDEdicion = () => { estado.idEditando = null; };
 const limpiarFormularioCompleto = () => UI.limpiarFormulario(resetearIDEdicion);
 
+const abrirModalDesdeBoton = (categoria) => {
+    UI.abrirModal(categoria, false);
+};
+
 const actualizarPantalla = async (saltarEspera = false) => {
     try {
         if (!saltarEspera && !estado.cargando) {
@@ -50,6 +54,7 @@ const procesarFormulario = async (evento) => {
         await estado.gestor.guardar(estado.idEditando, datosTarea);
 
         limpiarFormularioCompleto();
+        UI.cerrarModal();
         await actualizarPantalla(true);
 
         const mensaje = esEdicion ? "Tarea editada" : "Tarea agregada";
@@ -66,12 +71,17 @@ const procesarAcciones = async (evento) => {
     const boton = evento.target.closest('button');
     if (!boton) return;
 
-    const { id } = boton.dataset;
+    const { id, categoria } = boton.dataset;
     const clases = boton.classList;
     
     const contenidoOriginal = boton.innerHTML;
 
     try {
+        if (clases.contains('accion-abrir-modal')) {
+            abrirModalDesdeBoton(categoria);
+            return;
+        }
+
         if (clases.contains('accion-eliminar')) {
             boton.disabled = true;
             boton.innerHTML = '<span class="spinner-border spinner-border-sm" style="width: 1rem; height: 1rem;"></span>';
@@ -99,7 +109,7 @@ const procesarAcciones = async (evento) => {
             const tarea = estado.gestor.obtenerTareaPorId(id);
             UI.cargarDatosEnFormulario(tarea);
             estado.idEditando = id;
-            UI.actualizarBotonGuardar(false, true);
+            UI.abrirModal(tarea.categoria, true);
             return;
         }
 

@@ -4,6 +4,11 @@ const SELECTORES = {
     categoria: '#tipoTarea',
     fecha: '#fechaTarea',
     hora: '#horaTarea',
+    modal: '#modalAgregarTarea',
+    modalHeader: '#modalHeader',
+    modalTitulo: '#modalTitulo',
+    campoFecha: '#campoFecha',
+    campoHora: '#campoHora',
     botonGuardar: '#formTarea button[type="submit"]',
     contadorTotal: '#contadorTotal',
     contadorPendientes: '#contadorPendientes',
@@ -76,6 +81,22 @@ export const UI = {
             DOM[clave] = document.querySelector(selector);
         });
 
+        if (DOM.texto) {
+            DOM.texto.addEventListener('keydown', (evento) => {
+                if (evento.key === 'Enter' && !evento.shiftKey) {
+                    evento.preventDefault();
+                    DOM.formulario?.requestSubmit();
+                }
+            });
+        }
+
+        if (DOM.modal) {
+            DOM.modalInstancia = bootstrap.Modal.getOrCreateInstance(DOM.modal);
+            DOM.modal.addEventListener('hidden.bs.modal', () => {
+                this.limpiarFormulario(() => {});
+            });
+        }
+
         const hoy = new Date();
         const fechaLocal = new Date(hoy.getTime() - (hoy.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
         DOM.fecha.setAttribute('min', fechaLocal);
@@ -102,6 +123,49 @@ export const UI = {
         DOM.categoria.value = tarea.categoria;
         DOM.fecha.value = tarea.fecha || '';
         DOM.hora.value = tarea.hora || '';
+        this.mostrarCamposAdicionales(tarea.categoria);
+    },
+
+    abrirModal(categoria = 'importante', editando = false) {
+        if (!DOM.modalInstancia) return;
+        this.mostrarCamposAdicionales(categoria);
+        DOM.categoria.value = categoria;
+        this.aplicarTemaModal(categoria);
+        this.actualizarBotonGuardar(false, editando);
+        DOM.modalInstancia.show();
+        setTimeout(() => DOM.texto?.focus(), 100);
+    },
+
+    cerrarModal() {
+        DOM.modalInstancia?.hide();
+    },
+
+    aplicarTemaModal(categoria) {
+        const estilos = {
+            importante: 'bg-danger text-white',
+            relevante: 'bg-warning text-dark',
+            nota: 'bg-primary text-white',
+            compra: 'bg-success text-white'
+        };
+
+        const clase = estilos[categoria] || 'bg-dark text-white';
+        if (DOM.modalHeader) DOM.modalHeader.className = `modal-header py-3 px-4 border-0 ${clase}`;
+        if (DOM.modalTitulo) {
+            const iconos = {
+                importante: 'bi-exclamation-triangle-fill',
+                relevante: 'bi-lightning-charge-fill',
+                nota: 'bi-journal-text',
+                compra: 'bi-cart-fill'
+            };
+            const icono = iconos[categoria] || 'bi-pencil-square';
+            DOM.modalTitulo.innerHTML = `<i class="bi ${icono} me-2"></i>Agregar ${categoria === 'compra' ? 'compra' : categoria === 'nota' ? 'nota' : categoria === 'relevante' ? 'tarea relevante' : 'tarea importante'}`;
+        }
+    },
+
+    mostrarCamposAdicionales(categoria) {
+        const mostrar = categoria === 'importante' || categoria === 'relevante';
+        DOM.campoFecha?.classList.toggle('d-none', !mostrar);
+        DOM.campoHora?.classList.toggle('d-none', !mostrar);
     },
 
     validarFormulario(esEdicion = false) {
@@ -137,6 +201,11 @@ export const UI = {
     limpiarFormulario(idEditandoCallback) {
         DOM.formulario?.reset();
         DOM.formulario?.classList.remove('was-validated');
+        if (DOM.categoria) DOM.categoria.value = '';
+        if (DOM.texto) DOM.texto.value = '';
+        if (DOM.fecha) DOM.fecha.value = '';
+        if (DOM.hora) DOM.hora.value = '';
+        this.mostrarCamposAdicionales('importante');
         if (idEditandoCallback) idEditandoCallback();
         this.actualizarBotonGuardar(false, false);
     },
